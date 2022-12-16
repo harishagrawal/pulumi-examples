@@ -153,7 +153,7 @@ func main() {
 
 		namespace, err := corev1.NewNamespace(ctx, "app-ns", &corev1.NamespaceArgs{
 			Metadata: &metav1.ObjectMetaArgs{
-				Name: pulumi.String("joe-duffy"),
+				Name: pulumi.String("test-1"),
 			},
 		}, pulumi.Provider(k8sProvider))
 		if err != nil {
