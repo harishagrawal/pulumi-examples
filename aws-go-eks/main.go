@@ -161,7 +161,7 @@ func main() {
 		}
 
 		appLabels := pulumi.StringMap{
-			"app": pulumi.String("iac-workshop"),
+			"app": pulumi.String("ballot"),
 		}
 		_, err = appsv1.NewDeployment(ctx, "app-dep", &appsv1.DeploymentArgs{
 			Metadata: &metav1.ObjectMetaArgs{
@@ -179,8 +179,8 @@ func main() {
 					Spec: &corev1.PodSpecArgs{
 						Containers: corev1.ContainerArray{
 							corev1.ContainerArgs{
-								Name:  pulumi.String("iac-workshop"),
-								Image: pulumi.String("jocatalin/kubernetes-bootcamp:v2"),
+								Name:  pulumi.String("ballot"),
+								Image: pulumi.String("zbio/ballot:latest"),
 							}},
 					},
 				},
