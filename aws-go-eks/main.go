@@ -148,6 +148,7 @@ func main() {
 				eksCluster.CertificateAuthority.Data().Elem(), eksCluster.Name),
 		}, pulumi.DependsOn([]pulumi.Resource{nodeGroup}))
 		if err != nil {
+			fmt.Println("Not able to generate kubeconfig")
 			return err
 		}
 
