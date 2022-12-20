@@ -147,6 +147,8 @@ func main() {
 			Kubeconfig: generateKubeconfig(eksCluster.Endpoint,
 				eksCluster.CertificateAuthority.Data().Elem(), eksCluster.Name),
 		}, pulumi.DependsOn([]pulumi.Resource{nodeGroup}))
+		fmt.Printf("Kubeconfig printing ---%+v\n",generateKubeconfig(eksCluster.Endpoint,
+			eksCluster.CertificateAuthority.Data().Elem(), eksCluster.Name))
 		if err != nil {
 			fmt.Println("Not able to generate kubeconfig")
 			return err
