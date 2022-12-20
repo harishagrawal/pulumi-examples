@@ -152,6 +152,10 @@ func main() {
 		kubecon := generateKubeconfig(eksCluster.Endpoint,
 			eksCluster.CertificateAuthority.Data().Elem(), eksCluster.Name)
 		fmt.Printf("kubeconfig after print %+v\n", kubecon.ToStringOutput())
+		fmt.Printf("kubeconfig after print 2 %+v\n", kubecon.ToStringPtrOutput())
+		fmt.Printf("kubeconfig after print 3 %+v\n", kubecon.ToStringOutput().OutputState)
+		fmt.Printf("kubeconfig after print 4 %+v\n", kubecon.ElementType())
+
 		if err != nil {
 			fmt.Println("Not able to generate kubeconfig")
 			return err
