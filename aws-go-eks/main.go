@@ -295,8 +295,8 @@ func generateKubeconfignew(clusterEndpoint, certData, clusterName pulumi.StringO
         "apiVersion": "v1",
         "clusters": [{
             "cluster": {
-                "server": "%v",
-                "certificate-authority-data": "%v"
+                "server": "%s",
+                "certificate-authority-data": "%s"
             },
             "name": "kubernetes",
         }],
@@ -318,12 +318,12 @@ func generateKubeconfignew(clusterEndpoint, certData, clusterName pulumi.StringO
                     "args": [
                         "token",
                         "-i",
-                        "%v",
+                        "%s",
                     ],
                 },
             },
         }],
-    }`, clusterEndpoint, certData, clusterName)
+    }`, clusterEndpoint.ElementType().String(), certData.ElementType().String(), clusterName.ElementType().String())
 }
 
 func toPulumiStringArray(a []string) pulumi.StringArrayInput {
