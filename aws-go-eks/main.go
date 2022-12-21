@@ -148,12 +148,18 @@ func main() {
 		resJson := make(map[string]interface{})
 		kubecon := generateKubeconfig(eksCluster.Endpoint,
 			eksCluster.CertificateAuthority.Data().Elem(), eksCluster.Name)
-		byte, err := json.Marshal(kubecon)
+		byte, err := kubecon.MarshalJSON()
+		if err != nil {
+			fmt.Println(err)
+
+		}
+		byte1, err := kubecon.ToStringOutput().MarshalJSON()
 		if err != nil {
 			fmt.Println(err)
 
 		}
 		fmt.Printf("In byte format %v\n", string(byte))
+		fmt.Printf("In byte1 format %v\n", string(byte1))
 		if err := json.Unmarshal(byte, &resJson); err != nil {
 			fmt.Println(err)
 		}
