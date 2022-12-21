@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
 
 	"github.com/pulumi/pulumi-aws/sdk/v5/go/aws/ec2"
 	"github.com/pulumi/pulumi-aws/sdk/v5/go/aws/eks"
@@ -11,6 +13,7 @@ import (
 	corev1 "github.com/pulumi/pulumi-kubernetes/sdk/v3/go/kubernetes/core/v1"
 	metav1 "github.com/pulumi/pulumi-kubernetes/sdk/v3/go/kubernetes/meta/v1"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
+	"gopkg.in/yaml.v1"
 )
 
 func main() {
@@ -142,19 +145,32 @@ func main() {
 
 		ctx.Export("kubeconfig", generateKubeconfig(eksCluster.Endpoint,
 			eksCluster.CertificateAuthority.Data().Elem(), eksCluster.Name))
+		resJson := make(map[string]interface{})
+		kubecon := generateKubeconfig(eksCluster.Endpoint,
+			eksCluster.CertificateAuthority.Data().Elem(), eksCluster.Name)
+		byte, err := json.Marshal(kubecon)
+		if err != nil {
+			fmt.Println(err)
 
+		}
+		fmt.Printf("In byte format %v\n", string(byte))
+		if err := json.Unmarshal(byte, &resJson); err != nil {
+			fmt.Println(err)
+		}
+		resYaml, err := yaml.Marshal(resJson)
+		if err != nil {
+			fmt.Println(err)
+		}
+		fmt.Printf("Res yaml is -----%v\n", string(resYaml))
+		if err := os.WriteFile("Kubeconfig", resYaml, 0755); err != nil {
+			fmt.Println(err)
+		}
 		k8sProvider, err := kubernetes.NewProvider(ctx, "k8sprovider", &kubernetes.ProviderArgs{
 			Kubeconfig: generateKubeconfig(eksCluster.Endpoint,
 				eksCluster.CertificateAuthority.Data().Elem(), eksCluster.Name),
 		}, pulumi.DependsOn([]pulumi.Resource{nodeGroup}))
 		fmt.Printf("Kubeconfig printing ---%+v\n", generateKubeconfig(eksCluster.Endpoint,
 			eksCluster.CertificateAuthority.Data().Elem(), eksCluster.Name))
-		kubecon := generateKubeconfig(eksCluster.Endpoint,
-			eksCluster.CertificateAuthority.Data().Elem(), eksCluster.Name)
-		fmt.Printf("kubeconfig after print %+v\n", kubecon.ToStringOutput())
-		fmt.Printf("kubeconfig after print 2 %+v\n", kubecon.ToStringPtrOutput())
-		fmt.Printf("kubeconfig after print 3 %+v\n", kubecon.ToStringOutput().OutputState)
-		fmt.Printf("kubeconfig after print 4 %+v\n", kubecon.ElementType())
 
 		if err != nil {
 			fmt.Println("Not able to generate kubeconfig")
