@@ -146,20 +146,20 @@ func main() {
 		ctx.Export("kubeconfig", generateKubeconfig(eksCluster.Endpoint,
 			eksCluster.CertificateAuthority.Data().Elem(), eksCluster.Name))
 		resJson := make(map[string]interface{})
-		kubecon := generateKubeconfig(eksCluster.Endpoint,
+		kubecon := generateKubeconfignew(eksCluster.Endpoint,
 			eksCluster.CertificateAuthority.Data().Elem(), eksCluster.Name)
-		byte, err := kubecon.MarshalJSON()
+		byte, err := json.Marshal(kubecon)
 		if err != nil {
 			fmt.Println(err)
 
 		}
-		byte1, err := kubecon.ToStringOutput().MarshalJSON()
-		if err != nil {
-			fmt.Println(err)
+		// byte1, err := kubecon.ToStringOutput().MarshalJSON()
+		// if err != nil {
+		// 	fmt.Println(err)
 
-		}
+		// }
 		fmt.Printf("In byte format %v\n", string(byte))
-		fmt.Printf("In byte1 format %v\n", string(byte1))
+		// fmt.Printf("In byte1 format %v\n", string(byte1))
 		if err := json.Unmarshal(byte, &resJson); err != nil {
 			fmt.Println(err)
 		}
@@ -284,6 +284,41 @@ func generateKubeconfig(clusterEndpoint pulumi.StringOutput, certData pulumi.Str
                         "token",
                         "-i",
                         "%s",
+                    ],
+                },
+            },
+        }],
+    }`, clusterEndpoint, certData, clusterName)
+}
+func generateKubeconfignew(clusterEndpoint, certData, clusterName pulumi.StringOutput) string {
+	return fmt.Sprintf(`{
+        "apiVersion": "v1",
+        "clusters": [{
+            "cluster": {
+                "server": "%v",
+                "certificate-authority-data": "%v"
+            },
+            "name": "kubernetes",
+        }],
+        "contexts": [{
+            "context": {
+                "cluster": "kubernetes",
+                "user": "aws",
+            },
+            "name": "aws",
+        }],
+        "current-context": "aws",
+        "kind": "Config",
+        "users": [{
+            "name": "aws",
+            "user": {
+                "exec": {
+                    "apiVersion": "client.authentication.k8s.io/v1beta1",
+                    "command": "aws-iam-authenticator",
+                    "args": [
+                        "token",
+                        "-i",
+                        "%v",
                     ],
                 },
             },
