@@ -152,8 +152,12 @@ func main() {
 		byte, err := json.Marshal(kubecon)
 		if err != nil {
 			fmt.Println(err)
-
 		}
+		kubecon1 := generateKubeconfig(eksCluster.Endpoint,
+			eksCluster.CertificateAuthority.Data().Elem(), eksCluster.Name)
+		kubeconfig1 := pulumi.All(kubecon1).ApplyT(func(args []interface{}) string { return fmt.Sprintf("%s", args[0]) })
+		fmt.Printf("kubeconfig1 is ---------- %+v\n", kubeconfig1)
+
 		// byte1, err := kubecon.ToStringOutput().MarshalJSON()
 		// if err != nil {
 		// 	fmt.Println(err)
@@ -299,7 +303,7 @@ func generateKubeconfignew(clusterEndpoint, certData, clusterName pulumi.StringO
         "apiVersion": "v1",
         "clusters": [{
             "cluster": {
-                "server": "%s",
+                "server": %s,
                 "certificate-authority-data": "%s"
             },
             "name": "kubernetes",
@@ -327,7 +331,7 @@ func generateKubeconfignew(clusterEndpoint, certData, clusterName pulumi.StringO
                 },
             },
         }],
-    }`, string(cluster), string(clusterdata), string(clustername)))
+    }`, cluster, string(clusterdata), string(clustername)))
 }
 
 func toPulumiStringArray(a []string) pulumi.StringArrayInput {
