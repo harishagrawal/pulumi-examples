@@ -177,15 +177,19 @@ func main() {
 
 		kubeconfignew := generateKubeconfig(eksCluster.Endpoint,
 			eksCluster.CertificateAuthority.Data().Elem(), eksCluster.Name)
-		kubeconfigInBytes, err := kubeconfignew.ToStringOutput().MarshalJSON()
-		kubeconfigInBytes1, err := kubeconfignew.MarshalJSON()
-		if err != nil {
+		kubeconfigInBytes, err1 := kubeconfignew.ToStringOutput().MarshalJSON()
+		if err1 != nil {
+			fmt.Printf("Error in converting into json")
+		}
+
+		kubeconfigInBytes1, err2 := kubeconfignew.MarshalJSON()
+		if err2 != nil {
 			fmt.Printf("Error in converting into json")
 		}
 		fmt.Printf("In byte format new %+v\n", string(kubeconfigInBytes))
 		fmt.Printf("In byte format new 1%+v\n", string(kubeconfigInBytes1))
 		kubeconfigInString := kubeconfignew.ToStringOutput()
-		fmt.Print("Kubeconfig in string %+v\n", kubeconfigInString)
+		fmt.Printf("Kubeconfig in string %+v\n", kubeconfigInString)
 		kubeconfig1 := pulumi.All(kubeconfignew).ApplyT(func(args []interface{}) string { return fmt.Sprintf("%s", args[0]) })
 		fmt.Printf("Kubeconfig in another string %+v\n", kubeconfig1)
 
