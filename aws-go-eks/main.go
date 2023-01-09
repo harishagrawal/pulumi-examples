@@ -1,16 +1,13 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"os"
 
 	"github.com/pulumi/pulumi-aws/sdk/v5/go/aws/ec2"
 	"github.com/pulumi/pulumi-aws/sdk/v5/go/aws/eks"
 	"github.com/pulumi/pulumi-aws/sdk/v5/go/aws/iam"
 	"github.com/pulumi/pulumi-kubernetes/sdk/v3/go/kubernetes"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
-	"gopkg.in/yaml.v1"
 )
 
 func main() {
@@ -142,57 +139,12 @@ func main() {
 
 		ctx.Export("kubeconfig", generateKubeconfig(eksCluster.Endpoint,
 			eksCluster.CertificateAuthority.Data().Elem(), eksCluster.Name))
-		resJson := make(map[string]interface{})
-		kubecon := generateKubeconfignew(eksCluster.Endpoint,
-			eksCluster.CertificateAuthority.Data().Elem(), eksCluster.Name)
-		fmt.Printf("kubecon in string %s\n", kubecon)
-		byte, err := json.Marshal(kubecon)
-		if err != nil {
-			fmt.Println(err)
-		}
 
-		// byte1, err := kubecon.ToStringOutput().MarshalJSON()
-		// if err != nil {
-		// 	fmt.Println(err)
-
-		// }
-		fmt.Printf("In byte format %v\n", string(byte))
-		// fmt.Printf("In byte1 format %v\n", string(byte1))
-		if err := json.Unmarshal(byte, &resJson); err != nil {
-			fmt.Println(err)
-		}
-		resYaml, err := yaml.Marshal(resJson)
-		if err != nil {
-			fmt.Println(err)
-		}
-		fmt.Printf("Res yaml is -----%v\n", string(resYaml))
-		if err := os.WriteFile("Kubeconfig", resYaml, 0755); err != nil {
-			fmt.Println(err)
-		}
 		k8sProvider, err := kubernetes.NewProvider(ctx, "k8sprovider", &kubernetes.ProviderArgs{
 			Kubeconfig: generateKubeconfig(eksCluster.Endpoint,
 				eksCluster.CertificateAuthority.Data().Elem(), eksCluster.Name),
 		}, pulumi.DependsOn([]pulumi.Resource{nodeGroup}))
 		fmt.Printf("K8S provider %+v\n", k8sProvider)
-
-		kubeconfignew := generateKubeconfig(eksCluster.Endpoint,
-			eksCluster.CertificateAuthority.Data().Elem(), eksCluster.Name)
-		kubeconfigInBytes, err1 := kubeconfignew.ToStringOutput().MarshalJSON()
-		if err1 != nil {
-			fmt.Printf("Error in converting into json")
-		}
-
-		kubeconfigInBytes1, err2 := kubeconfignew.MarshalJSON()
-		if err2 != nil {
-			fmt.Printf("Error in converting into json")
-		}
-		fmt.Printf("In byte format new %+v\n", string(kubeconfigInBytes))
-		fmt.Printf("In byte format new 1%+v\n", string(kubeconfigInBytes1))
-		kubeconfigInString := kubeconfignew.ToStringOutput()
-		fmt.Printf("Kubeconfig in string %+v\n", kubeconfigInString)
-		kubeconfig1 := pulumi.All(kubeconfignew).ApplyT(func(args []interface{}) string { return fmt.Sprintf("%s", args[0]) })
-		fmt.Printf("Kubeconfig in another string %+v\n", kubeconfig1)
-
 		if err != nil {
 			fmt.Println("Not able to generate kubeconfig")
 			return err
