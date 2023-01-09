@@ -9,9 +9,6 @@ import (
 	"github.com/pulumi/pulumi-aws/sdk/v5/go/aws/eks"
 	"github.com/pulumi/pulumi-aws/sdk/v5/go/aws/iam"
 	"github.com/pulumi/pulumi-kubernetes/sdk/v3/go/kubernetes"
-	appsv1 "github.com/pulumi/pulumi-kubernetes/sdk/v3/go/kubernetes/apps/v1"
-	corev1 "github.com/pulumi/pulumi-kubernetes/sdk/v3/go/kubernetes/core/v1"
-	metav1 "github.com/pulumi/pulumi-kubernetes/sdk/v3/go/kubernetes/meta/v1"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 	"gopkg.in/yaml.v1"
 )
@@ -153,10 +150,6 @@ func main() {
 		if err != nil {
 			fmt.Println(err)
 		}
-		kubecon1 := generateKubeconfig(eksCluster.Endpoint,
-			eksCluster.CertificateAuthority.Data().Elem(), eksCluster.Name)
-		kubeconfig1 := pulumi.All(kubecon1).ApplyT(func(args []interface{}) string { return fmt.Sprintf("%s", args[0]) })
-		fmt.Printf("kubeconfig1 is ---------- %+v\n", kubeconfig1)
 
 		// byte1, err := kubecon.ToStringOutput().MarshalJSON()
 		// if err != nil {
@@ -180,80 +173,93 @@ func main() {
 			Kubeconfig: generateKubeconfig(eksCluster.Endpoint,
 				eksCluster.CertificateAuthority.Data().Elem(), eksCluster.Name),
 		}, pulumi.DependsOn([]pulumi.Resource{nodeGroup}))
-		fmt.Printf("Kubeconfig printing ---%+v\n", generateKubeconfig(eksCluster.Endpoint,
-			eksCluster.CertificateAuthority.Data().Elem(), eksCluster.Name))
+		fmt.Printf("K8S provider %+v\n", k8sProvider)
+
+		kubeconfignew := generateKubeconfig(eksCluster.Endpoint,
+			eksCluster.CertificateAuthority.Data().Elem(), eksCluster.Name)
+		kubeconfigInBytes, err := kubeconfignew.ToStringOutput().MarshalJSON()
+		kubeconfigInBytes1, err := kubeconfignew.MarshalJSON()
+		if err != nil {
+			fmt.Printf("Error in converting into json")
+		}
+		fmt.Printf("In byte format new %+v\n", string(kubeconfigInBytes))
+		fmt.Printf("In byte format new 1%+v\n", string(kubeconfigInBytes1))
+		kubeconfigInString := kubeconfignew.ToStringOutput()
+		fmt.Print("Kubeconfig in string %+v\n", kubeconfigInString)
+		kubeconfig1 := pulumi.All(kubeconfignew).ApplyT(func(args []interface{}) string { return fmt.Sprintf("%s", args[0]) })
+		fmt.Printf("Kubeconfig in another string %+v\n", kubeconfig1)
 
 		if err != nil {
 			fmt.Println("Not able to generate kubeconfig")
 			return err
 		}
 
-		namespace, err := corev1.NewNamespace(ctx, "app-ns", &corev1.NamespaceArgs{
-			Metadata: &metav1.ObjectMetaArgs{
-				Name: pulumi.String("test-1"),
-			},
-		}, pulumi.Provider(k8sProvider))
-		if err != nil {
-			return err
-		}
+		// namespace, err := corev1.NewNamespace(ctx, "app-ns", &corev1.NamespaceArgs{
+		// 	Metadata: &metav1.ObjectMetaArgs{
+		// 		Name: pulumi.String("test-1"),
+		// 	},
+		// }, pulumi.Provider(k8sProvider))
+		// if err != nil {
+		// 	return err
+		// }
 
-		appLabels := pulumi.StringMap{
-			"app": pulumi.String("ballot"),
-		}
-		_, err = appsv1.NewDeployment(ctx, "app-dep", &appsv1.DeploymentArgs{
-			Metadata: &metav1.ObjectMetaArgs{
-				Namespace: namespace.Metadata.Elem().Name(),
-			},
-			Spec: appsv1.DeploymentSpecArgs{
-				Selector: &metav1.LabelSelectorArgs{
-					MatchLabels: appLabels,
-				},
-				Replicas: pulumi.Int(3),
-				Template: &corev1.PodTemplateSpecArgs{
-					Metadata: &metav1.ObjectMetaArgs{
-						Labels: appLabels,
-					},
-					Spec: &corev1.PodSpecArgs{
-						Containers: corev1.ContainerArray{
-							corev1.ContainerArgs{
-								Name:  pulumi.String("ballot"),
-								Image: pulumi.String("zbio/ballot:latest"),
-							}},
-					},
-				},
-			},
-		}, pulumi.Provider(k8sProvider))
-		if err != nil {
-			return err
-		}
+		// appLabels := pulumi.StringMap{
+		// 	"app": pulumi.String("ballot"),
+		// }
+		// _, err = appsv1.NewDeployment(ctx, "app-dep", &appsv1.DeploymentArgs{
+		// 	Metadata: &metav1.ObjectMetaArgs{
+		// 		Namespace: namespace.Metadata.Elem().Name(),
+		// 	},
+		// 	Spec: appsv1.DeploymentSpecArgs{
+		// 		Selector: &metav1.LabelSelectorArgs{
+		// 			MatchLabels: appLabels,
+		// 		},
+		// 		Replicas: pulumi.Int(3),
+		// 		Template: &corev1.PodTemplateSpecArgs{
+		// 			Metadata: &metav1.ObjectMetaArgs{
+		// 				Labels: appLabels,
+		// 			},
+		// 			Spec: &corev1.PodSpecArgs{
+		// 				Containers: corev1.ContainerArray{
+		// 					corev1.ContainerArgs{
+		// 						Name:  pulumi.String("ballot"),
+		// 						Image: pulumi.String("zbio/ballot:latest"),
+		// 					}},
+		// 			},
+		// 		},
+		// 	},
+		// }, pulumi.Provider(k8sProvider))
+		// if err != nil {
+		// 	return err
+		// }
 
-		service, err := corev1.NewService(ctx, "app-service", &corev1.ServiceArgs{
-			Metadata: &metav1.ObjectMetaArgs{
-				Namespace: namespace.Metadata.Elem().Name(),
-				Labels:    appLabels,
-			},
-			Spec: &corev1.ServiceSpecArgs{
-				Ports: corev1.ServicePortArray{
-					corev1.ServicePortArgs{
-						Port:       pulumi.Int(80),
-						TargetPort: pulumi.Int(8080),
-					},
-				},
-				Selector: appLabels,
-				Type:     pulumi.String("LoadBalancer"),
-			},
-		}, pulumi.Provider(k8sProvider))
-		if err != nil {
-			return err
-		}
+		// service, err := corev1.NewService(ctx, "app-service", &corev1.ServiceArgs{
+		// 	Metadata: &metav1.ObjectMetaArgs{
+		// 		Namespace: namespace.Metadata.Elem().Name(),
+		// 		Labels:    appLabels,
+		// 	},
+		// 	Spec: &corev1.ServiceSpecArgs{
+		// 		Ports: corev1.ServicePortArray{
+		// 			corev1.ServicePortArgs{
+		// 				Port:       pulumi.Int(80),
+		// 				TargetPort: pulumi.Int(8080),
+		// 			},
+		// 		},
+		// 		Selector: appLabels,
+		// 		Type:     pulumi.String("LoadBalancer"),
+		// 	},
+		// }, pulumi.Provider(k8sProvider))
+		// if err != nil {
+		// 	return err
+		// }
 
-		ctx.Export("url", service.Status.ApplyT(func(status *corev1.ServiceStatus) *string {
-			ingress := status.LoadBalancer.Ingress[0]
-			if ingress.Hostname != nil {
-				return ingress.Hostname
-			}
-			return ingress.Ip
-		}))
+		// ctx.Export("url", service.Status.ApplyT(func(status *corev1.ServiceStatus) *string {
+		// 	ingress := status.LoadBalancer.Ingress[0]
+		// 	if ingress.Hostname != nil {
+		// 		return ingress.Hostname
+		// 	}
+		// 	return ingress.Ip
+		// }))
 
 		return nil
 	})
